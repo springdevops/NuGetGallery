@@ -39,7 +39,6 @@ namespace NuGetGallery
         /// Sign In\Register view
         /// </summary>
         [HttpGet]
-        [RequireSsl]
         public virtual ActionResult LogOn(string returnUrl)
         {
             // I think it should be obvious why we don't want the current URL to be the return URL here ;)
@@ -55,8 +54,6 @@ namespace NuGetGallery
         }
 
         [HttpPost]
-        [RequireSsl]
-        [ValidateAntiForgeryToken]
         public virtual async Task<ActionResult> SignIn(LogOnViewModel model, string returnUrl, bool linkingAccount)
         {
             // I think it should be obvious why we don't want the current URL to be the return URL here ;)
@@ -73,26 +70,38 @@ namespace NuGetGallery
                 return LogOnView(model);
             }
 
-            var user = await AuthService.Authenticate(model.SignIn.UserNameOrEmail, model.SignIn.Password);
 
-            if (user == null)
+            String name;
+            var aduser = Authentication.Providers.ActiveDirectory.ActiveDirectoryLoginProvider.ValidateCredentials("SPRING", model.SignIn.UserNameOrEmail, model.SignIn.Password, out name);
+            if (!aduser)
             {
+                //check user on AD and create it on Local Database
                 ModelState.AddModelError(
                     "SignIn",
                     Strings.UsernameAndPasswordNotFound);
 
                 return LogOnView(model);
             }
-            
-            if (linkingAccount)
+
+            AuthenticatedUser user = null;
+            var localUser = AuthService.FindByUserNameOrEmail(model.SignIn.UserNameOrEmail);
+            if (localUser == null)
             {
-                // Link with an external account
-                user = await AssociateCredential(user);
+                user = await AuthService.Register(
+                   model.SignIn.UserNameOrEmail,
+                   model.SignIn.UserNameOrEmail + "@springwireless.com",
+                   CredentialBuilder.CreatePbkdf2Password(model.SignIn.Password), name);
+            }
+            else
+            {
+                user = await AuthService.Authenticate(model.SignIn.UserNameOrEmail, model.SignIn.Password);
                 if (user == null)
                 {
-                    return ExternalLinkExpired();
+                    await AuthService.UpdateADPassword(localUser, model.SignIn.Password);
+                    user = await AuthService.Authenticate(model.SignIn.UserNameOrEmail, model.SignIn.Password);
                 }
             }
+
 
             // If we are an administrator and Gallery.EnforcedAuthProviderForAdmin is set
             // to require a specific authentication provider, challenge that provider if needed.
@@ -115,7 +124,7 @@ namespace NuGetGallery
                 && authenticatedUser.User.IsInRole(Constants.AdminRoleName))
             {
                 // Seems we *need* a specific authentication provider. Check if we logged in using one...
-                var providers = enforcedProviders.Split(new[] {';'}, StringSplitOptions.RemoveEmptyEntries);
+                var providers = enforcedProviders.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
 
                 if (!providers.Any(p => string.Equals(p, authenticatedUser.CredentialUsed.Type, StringComparison.OrdinalIgnoreCase))
                     && !providers.Any(p => string.Equals(CredentialTypes.ExternalPrefix + p, authenticatedUser.CredentialUsed.Type, StringComparison.OrdinalIgnoreCase)))
@@ -139,7 +148,7 @@ namespace NuGetGallery
         {
             return RedirectToAction("LogOn", new { returnUrl });
         }
-        
+
         [HttpPost]
         [RequireSsl]
         [ValidateAntiForgeryToken]
@@ -225,7 +234,7 @@ namespace NuGetGallery
         {
             OwinContext.Authentication.SignOut();
 
-            if (!string.IsNullOrEmpty(returnUrl) 
+            if (!string.IsNullOrEmpty(returnUrl)
                 && returnUrl.Contains("account"))
             {
                 returnUrl = null;
@@ -388,6 +397,7 @@ namespace NuGetGallery
             // Reinitialize any nulled-out sub models
             existingModel.SignIn = existingModel.SignIn ?? new SignInViewModel();
             existingModel.Register = existingModel.Register ?? new RegisterViewModel();
+            existingModel.ActiveDirectory = true;
 
             return View("LogOn", existingModel);
         }

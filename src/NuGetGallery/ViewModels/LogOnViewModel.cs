@@ -20,6 +20,8 @@ namespace NuGetGallery
         public RegisterViewModel Register { get; set; }
         public IList<AuthenticationProviderViewModel> Providers { get; set; }
 
+        public bool ActiveDirectory = false;
+
         public LogOnViewModel()
             : this(new SignInViewModel())
         {
@@ -42,13 +44,13 @@ namespace NuGetGallery
     public class SignInViewModel
     {
         [Required]
-        [Display(Name = "Username or Email")]
-        [Hint("Enter your username or email address.")]
+        [Display(Name = "Username")]
+        [Hint("Enter your username")]
         public string UserNameOrEmail { get; set; }
 
         [Required]
         [DataType(DataType.Password)]
-        [Hint("Passwords must be at least 7 characters long.")]
+        [Hint("Same from AD")]
         [AllowHtml]
         public string Password { get; set; }
 

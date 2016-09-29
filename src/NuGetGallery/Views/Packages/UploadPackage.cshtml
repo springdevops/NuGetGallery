@@ -6,44 +6,15 @@
 
 <h1 class="page-heading">Upload Your Package</h1>
 
-@ViewHelpers.UploadSequence(1)
+<pre>
 
-@using (Html.BeginForm("UploadPackage", "Packages", FormMethod.Post, new { id = "uploadForm", enctype = "multipart/form-data" }))
-{
-    <fieldset class="form">
-        <legend>Upload a Package</legend>
-        @Html.AntiForgeryToken()
+    #Register the Spring Repository in you machine
+    Register-PSRepository -Name Spring -SourceLocation http://br-srvvmrep-04:8585 -InstallationPolicy Trusted
 
-        <p class="message">Your package file will be uploaded and hosted on the @(Config.Current.Brand) server (@(Config.Current.SiteRoot)).</p>
+    #Update Manifest With ModuleVersion From Build
+    Update-ModuleManifest -Path .\HelloWorld.psd1  -ModuleVersion 1.0.1
 
-        @Html.ValidationSummary(true)
+    #Publish the module to Spring Repositorry
+    Publish-Module -Path .\HelloWorld -NuGetApiKey YOUR_API_KEY  -Repository Spring
 
-        <div class="form-field">
-            <label for="PackageFile">Choose a package...</label>
-            <input type="file" name="UploadFile" accept=".nupkg" />
-        </div>
-
-        <input type="submit" value="Upload" title="Upload the package." />
-
-        <div id="asyncUploadPanel" class="async-upload-panel">
-            <div id="asyncUploadProgressInitial" class="async-upload-progress-initial">
-                <span id="asyncUploadProgressAdvance" class="async-upload-progress-advance"></span>
-            </div>
-            <div id="asyncUploadFileName" class="async-upload-file-name"></div>
-        </div>
-    </fieldset>
-}
-
-@section BottomScripts
-{
-    @* Right now this is the only page that uses this script. If we increase our usage of it, we should put it in our bundles *@
-    <script type="text/javascript" src="@Url.Content("~/Scripts/async-file-upload.js")"></script>
-    <script type="text/javascript">
-        $(function () {
-            AsyncFileUploadManager.init(
-                '@Url.Action(actionName: "UploadPackageProgress", controllerName: "Packages")',
-                'uploadForm',
-                '@Scripts.Url("~/Scripts/jquery")');
-        });
-    </script>
-}
+</pre>

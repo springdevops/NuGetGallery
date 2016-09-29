@@ -167,6 +167,11 @@ namespace NuGetGallery.Authentication
 
         public virtual async Task<AuthenticatedUser> Register(string username, string emailAddress, Credential credential)
         {
+           return await Register(username, emailAddress, credential, "");
+        }
+
+        public virtual async Task<AuthenticatedUser> Register(string username, string emailAddress, Credential credential, string name)
+        {
             if (_config.FeedOnlyMode)
             {
                 throw new FeedOnlyModeException(FeedOnlyModeException.FeedOnlyModeError);
@@ -190,10 +195,12 @@ namespace NuGetGallery.Authentication
             var newUser = new User(username)
             {
                 EmailAllowed = true,
-                UnconfirmedEmailAddress = emailAddress,
-                EmailConfirmationToken = CryptographyService.GenerateToken(),
+                EmailAddress = emailAddress,
+                UnconfirmedEmailAddress = null,
+                EmailConfirmationToken = null,
                 NotifyPackagePushed = true,
-                CreatedUtc = DateTime.UtcNow
+                CreatedUtc = DateTime.UtcNow,
+                Name = name
             };
 
             // Add a credential for the password and the API Key
@@ -347,6 +354,24 @@ namespace NuGetGallery.Authentication
 
             // Save changes
             await Entities.SaveChangesAsync();
+            return true;
+        }
+
+        public virtual async Task<bool> UpdateADPassword(User user, string newPassword)
+        {
+            var hasPassword = user.Credentials.Any(
+                c => c.Type.StartsWith(CredentialTypes.Password.Prefix, StringComparison.OrdinalIgnoreCase));
+            Credential _;
+            if (hasPassword && !ValidatePasswordCredential(user.Credentials, newPassword, out _))
+            {
+                // Replace/Set password credential
+                var passwordCredential = CredentialBuilder.CreatePbkdf2Password(newPassword);
+                await ReplaceCredentialInternal(user, passwordCredential);
+
+                // Save changes
+                await Entities.SaveChangesAsync();
+            }
+        
             return true;
         }
 
@@ -599,7 +624,7 @@ namespace NuGetGallery.Authentication
             }
         }
 
-        private User FindByUserNameOrEmail(string userNameOrEmail)
+        public User FindByUserNameOrEmail(string userNameOrEmail)
         {
             var users = Entities
                 .Users

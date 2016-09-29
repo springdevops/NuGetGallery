@@ -4,7 +4,15 @@
 }
 
 <div id="logon">
-    @if (Model.External != null)
+    @if (Model.ActiveDirectory)
+    {
+        <div id="signIn">
+            <h3>Sign in</h3>
+            @Html.Partial("_SignInAD", Model)
+        </div>
+
+    }
+    else if (Model.External != null)
     {
         if (Model.External.FoundExistingUser)
         {

@@ -33,3 +33,11 @@ using System.Runtime.InteropServices;
 // AssemblyVersion, AssemblyFileVersion, AssemblyInformationalVersion, AssemblyMetadata (for Branch, CommitId, and BuildDateUtc)
 
 [assembly: AssemblyMetadata("RepositoryUrl", "https://www.github.com/NuGet/NuGetGallery")]
+
+[assembly: AssemblyVersion("1.0.0")]
+[assembly: AssemblyInformationalVersion("1.0.0-master")]
+#if !PORTABLE
+[assembly: AssemblyMetadata("Branch", "master")]
+[assembly: AssemblyMetadata("CommitId", "0c64581")]
+[assembly: AssemblyMetadata("BuildDateUtc", "09/27/2016 21:58:30 +00:00")]
+#endif

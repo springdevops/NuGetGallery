@@ -24,6 +24,9 @@ namespace NuGetGallery
         }
 
         [StringLength(256)]
+        public string Name { get; set; }
+
+        [StringLength(256)]
         public string EmailAddress { get; set; }
 
         [StringLength(256)]
