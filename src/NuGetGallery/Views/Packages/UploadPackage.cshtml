@@ -6,15 +6,17 @@
 
 <h1 class="page-heading">Upload Your Package</h1>
 
-<pre>
-
-    #Register the Spring Repository in you machine
-    Register-PSRepository -Name Spring -SourceLocation http://br-srvvmrep-04:8585 -InstallationPolicy Trusted
-
-    #Update Manifest With ModuleVersion From Build
-    Update-ModuleManifest -Path .\HelloWorld.psd1  -ModuleVersion 1.0.1
-
-    #Publish the module to Spring Repositorry
-    Publish-Module -Path .\HelloWorld -NuGetApiKey YOUR_API_KEY  -Repository Spring
-
-</pre>
+<div class="featured">
+    <p>
+        #Register the Spring Repository in you machine <br />
+        <a href="https://technet.microsoft.com/pt-br/library/dn807168.aspx"><b>Register-PSRepository</b></a> -Name Spring -SourceLocation http://br-srvvmrep-04:8585 -InstallationPolicy Trusted
+    </p>
+    <p>
+        #Update Manifest With ModuleVersion From Build <br/>
+        <a href="https://technet.microsoft.com/pt-br/library/dn807166.aspx"><b>Update-ModuleManifest</b></a> -Path .\HelloWorld.psd1  -ModuleVersion 1.0.1
+</p>
+    <p>
+        #Publish the module to Spring Repositorry<br />
+        <a href="https://technet.microsoft.com/pt-br/library/dn807163.aspx"><b>Publish-Module</b></a> -Path .\HelloWorld -NuGetApiKey <b>YOUR_API_KEY</b>  -Repository Spring
+</p>
+</div>
